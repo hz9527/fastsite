@@ -1,6 +1,0 @@
-{
-  "devDependencies": {
-    "express": "^4.16.2",
-    "https": "^1.0.0"
-  }
-}
