@@ -10,7 +10,7 @@ const concatCssName = 'index.min.css'
 const path = require('path')
 const fs = require('fs')
 const swName = 'sw.js'
-const resolve = p => path.join(__dirname, './' + targetDir, p)
+const resolve = (p = '') => path.join(__dirname, './' + targetDir, p)
 
 gulp.task('script', () => {
   return gulp.src(targetDir + '/js/*.js')
@@ -36,7 +36,7 @@ gulp.task('generateSw', () => {
 gulp.task('watch', () => {
   gulp.watch(targetDir + '/js/*.js', () => {gulp.tasks.script.fn()})
   gulp.watch(targetDir + '/css/*.css', () => {gulp.tasks.css.fn()})
-  // gulp.watch(targetDir, ['generateSw'])
+  gulp.watch(targetDir, () => {gulp.tasks.generateSw.fn()})
   console.log('resource change')
 })
 
@@ -68,8 +68,8 @@ function generatorHtml (cb) {
 }
 
 function watchHtml () {
-  if (!fs.existsSync(path.resolve(__dirname, rootDir))) {
-    fs.mkdirSync(path.resolve(__dirname, rootDir))
+  if (!fs.existsSync(path.resolve(__dirname, './' + rootDir))) {
+    fs.mkdirSync(path.resolve(__dirname, './' + rootDir))
   }
   generatorHtml()
   let state = 0 // 0 not task 1 task 2 need exec
@@ -93,5 +93,5 @@ function watchHtml () {
 
 module.exports = function () {
   watchHtml()
-  gulp.tasks.script.fn()
+  gulp.tasks.dev.fn()
 }
