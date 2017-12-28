@@ -2,6 +2,7 @@ const gulp = require('gulp')
 const uglify = require('gulp-uglify')
 const minifyCss = require('gulp-clean-css')
 const concat = require('gulp-concat')
+const rollup = require('rollup')
 const swGenerator = require('sw-precache')
 const targetDir = 'app'
 const rootDir = 'dist'
@@ -13,10 +14,18 @@ const swName = 'sw.js'
 const resolve = (p = '') => path.join(__dirname, './' + targetDir, p)
 
 gulp.task('script', () => {
-  return gulp.src(targetDir + '/js/*.js')
-    .pipe(uglify())
-    .pipe(concat(concatJsName))
-    .pipe(gulp.dest(rootDir))
+  rollup.rollup({
+    input: './' + targetDir + '/js/index.js'
+  }).then(bundle => {
+    bundle.write({
+      file: `./${rootDir}/${concatJsName}`,
+      format: 'iife'
+    })
+  }).catch(e => console.log(e))
+  // return bundle
+  //   .pipe(uglify())
+  //   .pipe(concat(concatJsName))
+  //   .pipe(gulp.dest(rootDir))
 })
 
 gulp.task('css', () => {
@@ -90,6 +99,7 @@ function watchHtml () {
     }
   })
 }
+
 
 module.exports = function () {
   watchHtml()

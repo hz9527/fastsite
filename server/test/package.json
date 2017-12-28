@@ -6,6 +6,7 @@
     "gulp-concat": "^2.6.1",
     "gulp-uglify": "^3.0.0",
     "https": "^1.0.0",
+    "rollup": "^0.53.0",
     "sw-precache": "^5.2.0"
   }
 }

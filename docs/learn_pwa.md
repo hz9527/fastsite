@@ -16,7 +16,18 @@ if ('servericeWorker' in navigator) {
 }
 
 // sw.js
-const catchFileList = []
+const catchName = 'some-app'
+const catchFileList = [...] // some file list
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(cacheName)
+      .then(cache => {
+        cache.addAll(catchFileList)
+      })
+  )
+})
+
 ```
 
 > 正因为未被引入到html中，sw.js是一个特殊的宿主环境，比如你不能使用window，因此宿主环境就是self，不同于node中的global与浏览器中的window
+注册的serviceWorker提供诸如caches等全局变量，caches就是cacheStorage
