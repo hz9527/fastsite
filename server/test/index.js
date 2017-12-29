@@ -8,9 +8,14 @@ const gulp = require('./gulp.js')
 
 const app = express()
 
-app.use(express.static('./dist'))
+const Dir = './public'
+// const Dir = './dist'
 
-gulp()
+app.use(express.static(Dir))
+
+if (Dir === './dist') {
+  gulp()
+}
 
 // const httpsServer = https.createServer(credentials, app)
 //
