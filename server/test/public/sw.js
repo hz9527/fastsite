@@ -2,7 +2,7 @@ const cacheName = 'test'
 
 const catchList = ['./index.html', './index.js']
 
-self.removeEventListener('fetch', [])
+const lock = false
 
 self.addEventListener('install', event => {
   console.log('install')
@@ -23,6 +23,7 @@ self.addEventListener('activate', event => {
     caches.keys().then(cacheNames => {
       console.log('delete cache')
       return Promise.all(cacheNames.map(name => {
+        console.log(name, 321)
         return caches.delete(name)
       })).then(() => {
         return self.clients.claim()
@@ -32,18 +33,21 @@ self.addEventListener('activate', event => {
 })
 
 self.addEventListener('fetch', event => {
-  console.log(234)
+  console.log(caches)
   event.respondWith(
     caches.open(cacheName).then(function(cache) {
+      console.log(cache)
       return cache.match(event.request).then(response => {
+        console.log(response, 123)
         return response || fetch(event.request).then(response => {
+          console.log(321)
           cache.put(event.request, response.clone());
           return response;
         });
       });
     })
   )
-  console.log('fetch', 234)
+  console.log('fetch', 321)
   // setTimeout(() => {
   //   self.clients.matchAll().then(clients => {
   //     clients.forEach(c => {
