@@ -1,14 +1,14 @@
 ## pwa
 ### serviceWorker
-[1. 管辖范围](#1. 管辖范围)  
-[2. 注册文件（sw.js）](#2. 注册文件（sw.js）)  
-[3. install失败问题](#3. install失败问题)  
-[4. 跨域，如缓存cdn问题如何把控](#4. 跨域，如缓存cdn问题如何把控)  
-[5. sw更新后发生了什么？](#5. sw更新后发生了什么？)  
-[6. caches是个啥？](#6. caches是个啥？)  
-[7. clients是个啥？](#7. clients是个啥？)  
-[8. 通信方案](#8. 通信方案)  
-[9. 缓存方案](#9. 缓存方案)  
+[1.管辖范围](#1. 管辖范围)  
+[2.注册文件（sw.js）](#2. 注册文件（sw.js）)  
+[3.install失败问题](#3. install失败问题)  
+[4.跨域，如缓存cdn问题如何把控](#4. 跨域，如缓存cdn问题如何把控)  
+[5.sw更新后发生了什么？](#5. sw更新后发生了什么？)  
+[6.caches是个啥？](#6. caches是个啥？)  
+[7.clients是个啥？](#7. clients是个啥？)  
+[8.通信方案](#8. 通信方案)  
+[9.缓存方案](#9. 缓存方案)  
 [拓展阅读](https://developer.mozilla.org/zh-CN/docs/Web/API/Service_Worker_API/Using_Service_Workers)
 #### 1. 管辖范围  
 serviceWorker注册文件只能管辖注册文件所在目录下所有文件  
