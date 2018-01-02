@@ -32,7 +32,7 @@ self.addEventListener('activate', event => {
       console.log('delete cache')
       return Promise.all(cacheNames.map(name => {
         console.log(name, 321)
-        // return caches.delete(name)
+        return caches.delete(name)
       })).then(() => {
         return self.clients.claim()
       })
@@ -44,12 +44,12 @@ self.addEventListener('fetch', event => {
   console.log('fetch')
   event.respondWith(
     caches.open(cacheName).then(function(cache) {
-      console.log(cache)
+      // console.log(cache)
       return cache.match(event.request).then(response => {
-        console.log(response, 123)
+        // console.log(response, 123)
         return response || fetch(event.request).then(response => {
           console.log(response)
-          // cache.put(event.request, response.clone());
+          cache.put(event.request, response.clone());
           return response;
         });
       });
