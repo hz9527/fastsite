@@ -32,3 +32,23 @@ document.getElementById('add').onclick = function () {
   document.body.appendChild(script)
   script.src = './test.js'
 }
+
+if (!('Notification' in window)) {
+  console.log('not support Notification')
+} else {
+  console.log(Notification.permission, 123)
+  if (Notification.permission === 'granted') {
+    let notification = new Notification('test', {body: 'test'})
+    notification.onclick = e => {
+      console.log(e)
+    }
+  } else if (Notification.permission === 'default') {
+    Notification.requestPermission((permission) => {
+      if (permission === 'denied') {
+        console.log('denied')
+      } else if (permission === 'granted') {
+        console.log('granted')
+      }
+    })
+  }
+}

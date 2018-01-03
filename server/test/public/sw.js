@@ -62,6 +62,9 @@ self.addEventListener('fetch', event => {
 self.addEventListener('message', e => {
   console.log(e.data, 'sw receive message')
   clients.matchAll().then(clients => {
+    self.registration.showNotification('test', {
+      body: 'hahahaha'
+    })
     clients.forEach(client => {
       client.postMessage('message from sw')
     })

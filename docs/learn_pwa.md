@@ -1,4 +1,3 @@
-## pwa
 ### serviceWorker
 [1.管辖范围](#管辖范围)  
 [2.注册文件（sw.js）](#注册文件（sw.js）)  
