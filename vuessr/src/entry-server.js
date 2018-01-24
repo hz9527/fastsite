@@ -2,8 +2,12 @@ import {createApp} from './app'
 
 export default context => {
   return new Promise(resolve => {
-    let test = {a: 1, b: 2}
-    context.state = test
-    resolve(createApp(test))
+    let {router, store, app} = createApp()
+    let result = router.resolve(context.url)
+    console.log(result.route, context.url)
+    // router.onReady(route => {
+    //   console.log(route, 245)
+    // })
+    resolve(app)
   })
 }

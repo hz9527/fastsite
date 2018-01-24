@@ -25,6 +25,6 @@ if (Dir === './dist') {
 // httpsServer.listen(8088, function() {
 //     console.log('HTTPS Server is running on: https://localhost:%s', 8088);
 // })
-app.listen(8088, err => {
-  console.log('server run in 8088')
+app.listen(18000, err => {
+  console.log('server run in 18000')
 })

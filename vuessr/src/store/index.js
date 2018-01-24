@@ -1,10 +1,21 @@
-let store
+import Vue from 'vue'
+import Vuex from 'vuex'
 
-function change (data) {
-  store = data
-}
+Vue.use(Vuex)
 
-export {
-  change,
-  store
+export function createStore () {
+  return new Vuex.Store({
+    state: {
+      list: [],
+      detail: {} // title content
+    },
+    mutations: {
+      setList (state, list) {
+        state.list = list
+      },
+      setDetail (state, detail) {
+        state.detail = detail
+      }
+    }
+  })
 }
