@@ -15,7 +15,7 @@ export function createRouter () {
         component: Index
       },
       {
-        path: '/detail/:id',
+        path: '/detail/:owner/:repo',
         name: 'detail',
         component: Detail
       },

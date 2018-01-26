@@ -7,6 +7,7 @@ const compression = require('compression')
 const microcache = require('route-cache')
 const resolve = file => path.resolve(__dirname, file)
 const { createBundleRenderer } = require('vue-server-renderer')
+const Proxy = require('./api.js')
 
 const isProd = process.env.NODE_ENV === 'production'
 const useMicroCache = process.env.MICRO_CACHE !== 'false'
@@ -64,7 +65,7 @@ const serve = (path, cache) => express.static(resolve(path), {
 })
 
 app.use(compression({ threshold: 0 }))
-app.use(favicon('./public/logo-48.png'))
+app.use(favicon('./public/logo.png'))
 app.use('/dist', serve('./dist', true))
 app.use('/public', serve('./public', true))
 app.use('/manifest.json', serve('./manifest.json', true))
@@ -76,10 +77,12 @@ app.use('/service-worker.js', serve('./dist/service-worker.js'))
 // headers.
 // 1-second microcache.
 // https://www.nginx.com/blog/benefits-of-microcaching-nginx/
-app.use(microcache.cacheSeconds(1, req => useMicroCache && req.originalUrl))
+// app.use(microcache.cacheSeconds(1, req => useMicroCache && req.originalUrl))
+require('memeye')()
+// proxy api
+Proxy(app)
 
 function render (req, res) {
-  console.log('render')
   const s = Date.now()
 
   res.setHeader("Content-Type", "text/html")
@@ -104,7 +107,6 @@ function render (req, res) {
     url: req.url
   }
   renderer.renderToString(context, (err, html) => {
-    console.log(err, html, 'fn')
     if (err) {
       return handleError(err)
     }
