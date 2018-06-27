@@ -8,9 +8,41 @@
   <body>
     <div id="app"></div>
     <script>
-      navigator.serviceWorker.register('/sw.js').then(register => {
-        
-      })
+      window.SEND_TO_SW = {
+        _state: 'init',
+        _cacheList: [],
+        send (exec, data) {
+          if (this._state === 'notSupport') return
+          if (this._state === 'init') {
+            this._cacheList.push([exec, data])
+          } else {
+            try {
+              navigator.serviceWorker.controller.postMessage({ exec, data })
+            } catch (e) {
+              console.log(e)
+            }
+          }
+        },
+        setState (state) {
+          if (state !== 'notSupport' || state !== 'activated') return
+          this._state = state
+          if (state === 'activated') this._cacheList.forEach(item => this.send(item[0], item[1]))
+          this._cacheList = null
+        }
+      }
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').then(register => {
+          register.addEventListener('updatefound', () => {
+            const newWorker = register.installing
+            newWorker.addEventListener('statechange', (e) => {
+              if (newWorker.state === 'activated') SEND_TO_SW.setState('activated')
+            })
+          })
+        })
+        if (navigator.serviceWorker.controller) SEND_TO_SW.setState('activated')
+      } else {
+        SEND_TO_SW.setState('notSupport')
+      }
       // if (location.protocol === 'https' && 'serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js')
     </script>
     <!-- built files will be auto injected -->

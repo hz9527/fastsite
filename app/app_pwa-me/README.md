@@ -20,7 +20,7 @@
 其次肯定是需要考虑资源加载问题，即我们默认js、css的更新是频繁并是部分更新，那么问题来了，如何解决hash问题，这可能导致我们在cacheStorage里根本不知道如何删除之前的缓存。我们只需要将原url由`[name].[hash].ext` 变为 `[name].ext?hash=[hash]`，在取数据时严格按照url查询，清空缓存则忽略search字段，示例代码如下：
 
 ```JavaScript
-self.on('fetch', event => {
+self.addEventListener('fetch', event => {
   // ...
   event.responseWith(
     caches.open(cacheName).then(cache => {
@@ -53,19 +53,34 @@ self.on('fetch', event => {
 
 不缓存script内主要作用是动态往html中注入css、js及在localStorage中写入版本号，有一个js为注入预渲染字符串（架框可以写死在html里）
 
-### 关于清除缓存
-
-从用户体验角度来讲，是否清除缓存不会对
-
 ### 关于预缓存
 
 由于希望sw不更新，所以预缓存不需要在sw文件里，而应该是客户端通过postMessage来通知sw，客户端通过localStorage内版本号来控制是否需要通知
 
+### 关于清除缓存
+
+从用户体验角度来讲，是否清除缓存不会对用户造成多大的影响，但是实际上这样是不好的。我们可以将缓存的资源分为两类，一类是会有打包版本的资源，如`app.hash.js`，及该资源确实能通过名字和hash确定同一文件的不同版本；一类则是文件hash资源，如`hash.png` `index.html`我们从文件无法区分是否是同一文件的不同版本，因此对于前者我们可以通过上述将请求改为`name.ext?hash=hash`的方式缓存，对于前者，我们可以在请求资源时确定是否有非此hash（‘版本’）文件，对于后者则在message中删除非当前版本资源。结合预缓存，示例代码如下：
+
+```js
+// client
+
+// sw
+self.addEventListener('message', msg => { // {exec: 'update', data: {precatch: Array, version: String}}
+  caches.open(cacheId)
+    .then(cache => {
+      // prefetch
+      cache.keys().then()
+    })
+})
+```
+
 ### 关于404页面
 
-不论是架框渲染还是预渲染，如果缓存html那么架框、预渲染是静态放在html中，那么更新后还是会因为缓存更新滞后会变成N+1，所以可以单独作为script，脚本将注入html片段字符串
+sw本质上是客户端的本地代理，因此建议404页面应该通过sw中访问`self.navigator.onLine`来决定返回什么页面
 
 ### 关于HTML
+
+不论是架框渲染还是预渲染，如果缓存html那么架框、预渲染是静态放在html中，那么更新后还是会因为缓存更新滞后会变成N+1，所以可以单独作为script，脚本将注入html片段字符串，当然如果对于架框渲染或者预渲染其实N+1次更新可能是可以容忍的，这个取决于业务场景
 
 ```html
 <!DOCTYPE html>
@@ -82,11 +97,6 @@ self.on('fetch', event => {
         navigator.serviceWorker.register('/sw.js').then(register => {
           //
         })
-      }
-      if (navigator.onLine === false) {
-        // inject css
-        // inject html String
-        document.getElementById('#app').innerHTML = '404page'
       }
     </script>
     <script> // 这个其实是每次动态拉取的js

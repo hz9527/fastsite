@@ -4,40 +4,67 @@
 // const nameHandler = () => {}; // [name].[hash].ext
 
 // const cacheId = 'sw-key';
-// const Index = 'index.html'
+const Index = 'index.html'
+let Version = '1.0'
 
+// function getUrlObj (url) {
+//   let nameMap = {reg: null, map: []};
+//   // name + 间隔符 + hash 间隔符是任意的，如. - _等等
+//   nameMap.reg = nameHandler(url).replace(/([.?*+^$[\]\\(){}|-])/g, '\\$1').replace(/(\\\[name\\\])|(\\\[hash\\\])/g, sub => {
+//     sub && nameMap.map.push(sub.replace(/\\/g, ''))
+//     return '(.+)'
+//   })
+//   let urlObj = url.split(/\/(?!\/)/)
+//   let fileName = urlObj.pop()
+//   let extInd = fileName.lastIndexOf('.')
+//   let ext = fileName.slice(extInd + 1)
+//   fileName = fileName.slice(0, extInd)
+//   let file = fileName.match(new RegExp(nameMap.reg))
+//   let name = []
+//   let hash = []
+//   if (file) {
+//     file.forEach((info, i) => {
+//       if (i > 0) nameMap.map[i - 1] === '[name]' ? name.push(info) : hash.push(info)
+//     })
+//   } else {
+//     name.push(fileName)
+//   }
+//   let baseUrl = urlObj.join('/')
+//   return { baseUrl, name, hash, ext }
+// }
 function getUrlObj (url) {
-  let nameMap = {reg: null, map: []};
-  // name + 间隔符 + hash 间隔符是任意的，如. - _等等 
-  nameMap.reg = nameHandler(url).replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1").replace(/(\\\[name\\\])|(\\\[hash\\\])/g, sub => {
-    sub && nameMap.map.push(sub.replace(/\\/g, ''));
+  let nameMap = { reg: null, map: [] }
+  // name + 间隔符 + hash 间隔符是任意的，如. - _等等
+  nameMap.reg = nameHandler(url).replace(/([.?*+^$[\]\\(){}|-])/g, '\\$1').replace(/(\\\[name\\\])|(\\\[hash\\\])/g, sub => {
+    sub && nameMap.map.push(sub.replace(/\\/g, ''))
     return '(.+)'
   })
-  let urlObj = url.split(/\/(?!\/)/);
-  let fileName = urlObj.pop();
-  let extInd = fileName.lastIndexOf('.');
-  let ext = fileName.slice(extInd + 1);
-  fileName = fileName.slice(0, extInd);
-  let file = fileName.match(new RegExp(nameMap.reg));
-  let name = [];
-  let hash = [];
+  let urlObj = new URL(url, self.location.origin)
+  urlObj.pathname = urlObj.pathname.split('/')
+  let fileName = urlObj.pathname.pop()
+  let extInd = fileName.lastIndexOf('.')
+  let ext = fileName.slice(extInd + 1)
+  fileName = fileName.slice(0, extInd)
+  let file = fileName.match(new RegExp(nameMap.reg))
+  let name = []
+  let hash = []
   if (file) {
     file.forEach((info, i) => {
-      if (i > 0) nameMap.map[i - 1] === '[name]' ? name.push(info) : hash.push(info);
+      if (i > 0) nameMap.map[i - 1] === '[name]' ? name.push(info) : hash.push(info)
     })
   } else {
-    name.push(fileName);
+    name.push(fileName)
   }
-  let baseUrl = urlObj.join('/');
-  return { baseUrl, name, hash, ext }
+  let baseUrl = urlObj.origin + urlObj.join('/')
+  return { baseUrl, name, hash, ext, urlHash: urlObj.hash, urlSearch: urlObj.search }
 }
 
-function getRequest(url, opt = {mode: 'no-cors'}) {
+function getRequest (url, opt = {mode: 'no-cors'}) {
   return new Request(url, opt)
 }
 
 function getCacheResquest (url) {
-  let {baseUrl, name, hash, ext} = nameHandler(url);
+  let { baseUrl, name, hash, ext } = getUrlObj(url)
   let cacheUrl = `${baseUrl}/${name.join('-')}.${ext}${hash.length > 0 ? `?hash=${hash.join('-')}` : ''}`
   return getRequest(cacheUrl)
 }
@@ -99,4 +126,8 @@ self.addEventListener('fetch', event => {
       })
     )
   }
+})
+
+self.addEventListener('message', event => {
+  console.log(event)
 })
