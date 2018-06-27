@@ -3,13 +3,16 @@ const path = require('path')
 function SWPlugin (options) {
    // todo should check every opt
   this.options = options || {}
+  this.version = ''
 }
 
 SWPlugin.prototype.apply = function (compiler) {
   this.genOption(compiler.options)
   compiler.plugin('emit', (compilation, callback) => {
+    let files = Object.keys(compilation.assets).filter(file => !/\.map$/.test(file))
+    this.getVersion(files)
     this.genSwFile(
-      this.genPrefetchList(Object.keys(compilation.assets).filter(file => !/\.map$/.test(file))),
+      this.genPrefetchList(files),
       this.genHandlers()
     ).then(callback, callback)
   })
@@ -26,16 +29,30 @@ SWPlugin.prototype.genOption = function (conf) {
     ignore: () => false,
     shouldFetch: url => /\.png|jpe?g|js|css|html$/.test(url),
     assetsPublicPath: conf.output.publicPath,
-    nameType: () => '[name].[hash]',
-    cacheHtml: true
+    nameType: () => '[name].[hash]'
   }
   this.options = Object.assign(options, this.options)
 }
 
 SWPlugin.prototype.genPrefetchList = function (files) {
+  let html = files.find(item => /\.html$/.test(item))
+  if (!('router' in this.options) && html) {
+    this.options.router = [
+      {
+        handlerPath: urlObj => urlObj.pathname === '/',
+        file: html, // 自定义file时可以这样 /static/index.html
+        cacheFirst: true
+      }
+    ]
+  }
   return files.filter(file => this.options.prefetch(file) && !this.options.ignore(file)
-   && (!/\.html$/.test(file) || this.options.cacheHtml))
-    .map(file => /\.html$/.test(file) ? file : this.joinPath(this.options.assetsPublicPath, file))
+   && (!/\.html$/.test(file) || this.options.router.some(item => item.file.indexOf(file) > -1)))
+    .map(file => /\.html$/.test(file) ? this.options.router.find(item => item.file.indexOf(file) > -1)).file
+     : this.joinPath(this.options.assetsPublicPath, file))
+}
+
+SWPlugin.prototype.getVersion = function (files) {
+  this.version = ''
 }
 
 SWPlugin.prototype.genHandlers = function () {
@@ -63,7 +80,14 @@ SWPlugin.prototype.genHandlers = function () {
   }
 }
 
+SWPlugin.prototype.injectHtml = function (fileList) {
+  return new Promise((resolve, reject) => {
+
+  })
+}
+
 SWPlugin.prototype.genSwFile = function (fileList, handlers) {
+  // fileList注入到html中，handlers，cacheId，router注入到sw中
   return new Promise((resolve, reject) => {
     fs.readFile(this.options.templatePath, (err, fd) => {
       if (err) reject(err)

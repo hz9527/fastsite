@@ -15,15 +15,14 @@
 * prefetch 在install时缓存文件列表，支持`Array<String | RegExp> Function`
 * ignore 不缓存文件，支持`Array<String | RegExp> Function`
 * shouldFetch 在fetch事件时决定是否处理，支持`Array<String | RegExp> Function`
-* assetsPublicPath 资源绝对路径，忽略`/ .html` 默认读取webpack，支持String Function
-* nameType 默认[name].[hash].ext以.分隔判断若不存在两者则不处理为hash模式，支持String Function
-* cacheHtml 默认true，缓存html
-* index 默认index.html
+* assetsPublicPath 资源绝对路径，忽略`.html` 默认读取webpack，支持String Function
+* nameType 默认[name].[hash]若匹配失败则不处理为hash模式，支持String Function
+* router Array 每一项为一个对象，包含`pathHandler file cacheFirst fallBack`
+
+> router对象是处理html返回的配置
 
 **高级**
 
-- [ ] fallback 404页面
-- [ ] message 是否监听message
 - [ ] messageHandler
 - [ ] fetchHandler
 - [ ] skipWait 在install是否直接skipWaiting
@@ -37,11 +36,12 @@
 ## 大致思路
 
 1. 获取webpack配置及打包文件列表，生成本插件基本配置及资源列表
-2. 读取模板文件，生成文件
+2. 将打包生成文件名数组作为md5入参计算出版本号
+3. 读取模板文件，生成文件
 
 ## sw文件设计
 
-1. 将资源hash变为query形式，如果不存在name则不处理，如abs.hash.js将变为abs.js？hash=hash；hash.png将变成hash.png。作为资源版本控制
+1. 将资源hash变为query形式，如果不存在name则不处理，如abs.hash.js将变为abs.js?hash=hash；hash.png将变成hash.png?sw_version=version。作为资源版本控制
 2. install将删除缓存并存储资源，并直接跳转为接管状态，接管页面直接通知客户端
 3. fetch事件则根据prefetch及shouldFetch来决定是否处理本次请求
 4. 默认处理请求为资源存在则直接返回，不存在则拉取资源并删除非本版本缓存。即缓存优先

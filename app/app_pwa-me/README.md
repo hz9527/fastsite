@@ -59,7 +59,7 @@ self.addEventListener('fetch', event => {
 
 ### 关于清除缓存
 
-从用户体验角度来讲，是否清除缓存不会对用户造成多大的影响，但是实际上这样是不好的。我们可以将缓存的资源分为两类，一类是会有打包版本的资源，如`app.hash.js`，及该资源确实能通过名字和hash确定同一文件的不同版本；一类则是文件hash资源，如`hash.png` `index.html`我们从文件无法区分是否是同一文件的不同版本，因此对于前者我们可以通过上述将请求改为`name.ext?hash=hash`的方式缓存，对于前者，我们可以在请求资源时确定是否有非此hash（‘版本’）文件，对于后者则在message中删除非当前版本资源。结合预缓存，示例代码如下：
+从用户体验角度来讲，是否清除缓存不会对用户造成多大的影响，但是实际上这样是不好的。我们可以将缓存的资源（文件）分为两类，一类是会有打包版本的资源，如`app.hash.js`，即该资源确实能通过名字和hash确定同一文件的不同版本；一类则是文件hash资源，如`hash.png` `index.html`我们从文件无法区分是否是同一文件的不同版本，因此对于前者我们可以通过上述将请求改为`name.ext?hash=hash`的方式缓存，对于前者，我们可以在请求资源时确定是否有非此hash（‘版本’）文件，对于后者则在message中删除非当前版本资源。结合预缓存，示例代码如下：
 
 ```js
 // client
@@ -93,10 +93,28 @@ sw本质上是客户端的本地代理，因此建议404页面应该通过sw中�
   <body>
     <div id="app"></div>
     <script>
+      window.SEND_TO_SW = {
+        _state: 'init',
+        _cacheList: [],
+        send (exec, data) {
+          // ...
+        },
+        setState (state) {
+          // ...
+        }
+      }
       if (location.protocol === 'https' && 'serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').then(register => {
-          //
+          register.addEventListener('updatefound', () => {
+            const newWorker = register.installing
+            newWorker.addEventListener('statechange', (e) => {
+              if (newWorker.state === 'activated') SEND_TO_SW.setState('activated')
+            })
+          })
         })
+        if (navigator.serviceWorker.controller) SEND_TO_SW.setState('activated')
+      } else {
+        SEND_TO_SW.setState('notSupport')
       }
     </script>
     <script> // 这个其实是每次动态拉取的js
@@ -107,7 +125,7 @@ sw本质上是客户端的本地代理，因此建议404页面应该通过sw中�
       } catch (err) {
         console.log(err)
       }
-      // inject css & js
+      // inject css & js 在业务代码中注入更新，当然也可以在此注入更新。具体看业务场景
     </script>
   </body>
 </html>

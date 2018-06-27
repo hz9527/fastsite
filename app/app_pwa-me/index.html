@@ -24,7 +24,7 @@
           }
         },
         setState (state) {
-          if (state !== 'notSupport' || state !== 'activated') return
+          if (state !== 'notSupport' || state !== 'activated' || this.state !== 'init') return
           this._state = state
           if (state === 'activated') this._cacheList.forEach(item => this.send(item[0], item[1]))
           this._cacheList = null
