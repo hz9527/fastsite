@@ -120,12 +120,12 @@ sw本质上是客户端的本地代理，因此建议404页面应该通过sw中�
     <script> // 这个其实是每次动态拉取的js
       window.NEED_UPDATE = true;
       try {
-        window.NEED_UPDAT = localStorage.getItem('appVersion') === curVersion;
-        window.NEED_UPDAT && localStorage.setItem('appVersion', curVersion);
+        window.NEED_UPDATE = localStorage.getItem('appVersion') === curVersion;
+        window.NEED_UPDATE && localStorage.setItem('appVersion', curVersion);
       } catch (err) {
         console.log(err)
       }
-      // inject css & js 在业务代码中注入更新，当然也可以在此注入更新。具体看业务场景
+      // inject css & js 在业务代码中注入更新，当然也可以在此注入更新。具体看业务场景 SEND_TO_SW.send('init', {version: xx, list: []})
     </script>
   </body>
 </html>

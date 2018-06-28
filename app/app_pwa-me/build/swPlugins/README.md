@@ -32,6 +32,7 @@
 1. prefetch将由prefetch、ignore、assetsPublicPath生成
 2. prefetch字段将作为数组传入，如果值为函数将先把webpack生成资源全部传入，资源将先经过prefix；数组字符串将先prefix，正则则不会
 3. shouldFetch，nameType将处理为函数传入
+4. executer自带封装两种方法 preLoad, init
 
 ## 大致思路
 

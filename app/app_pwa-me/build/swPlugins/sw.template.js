@@ -1,9 +1,7 @@
-// const preFetch = [];
-
-// const shouldFetchHandler = () => {};
-// const nameHandler = () => {}; // [name].[hash].ext
-
-// const cacheId = 'sw-key';
+const shouldFetchHandler = <% shouldFetchHandler %>
+const nameHandler = <% nameHandler %> // [name].[hash].ext
+const cacheId = <% cacheId %>
+const Router = <% Router %>
 self.VERSION = '1.0'
 
 // function getUrlObj (url) {
@@ -64,8 +62,8 @@ function getRequest (url, opt = {mode: 'no-cors'}) {
   return new Request(url, opt)
 }
 
-function getCacheResquest (url) {
-  let { baseUrl, urlHash, urlSearch, name, hash, ext } = transUrl(getUrlObj(url))
+function getCacheResquest (urlObj) {
+  let { baseUrl, urlHash, urlSearch, name, hash, ext } = transUrl(urlObj)
   let fileName = `${name.join('-')}${ext ? '.' + ext : ''}`
   let search = hash.length > 0 ? `hash=${hash.join('-')}` : `sw_version=${self.VERSION}`
   search = (urlSearch || '?') + search
@@ -73,13 +71,13 @@ function getCacheResquest (url) {
   return getRequest(cacheUrl)
 }
 
-function getResponseByCache (cache, url) {
-  let cacheRequest = getCacheResquest(url)
+function getResponseByCache (cache, urlObj) {
+  let cacheRequest = getCacheResquest(urlObj)
   return cache.match(cacheRequest).then(res => {
     if (res) {
       return res
     } else {
-      return fetch(getRequest(url))
+      return fetch(getRequest(urlObj.href))
         .then(response => {
           if (response.ok || response.type === 'opaque') {
             cache.match(cacheRequest, { ignoreSearch: true })
@@ -93,16 +91,7 @@ function getResponseByCache (cache, url) {
 }
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(cacheId)
-      .then(cache => {
-        return Promise.all(preFetch.map(url => getResponseByCache(cache, url)))
-      }).then(e => {
-        return self.skipWaiting()
-      }).catch(err => {
-        return self.skipWaiting()
-      })
-  )
+  event.waitUntil(self.skipWaiting())
 })
 
 self.addEventListener('activate', event => {
@@ -110,28 +99,38 @@ self.addEventListener('activate', event => {
 })
 
 self.addEventListener('fetch', event => {
-  let url = event.request.url
-  let shouldFetch = preFetch.some(item => item === url)
-  if (!shouldFetch) shouldFetch = shouldFetchHandler(url)
-  if (!shouldFetch && Index) { // 判断URL是否为请求html
-    // todo 这里并不完善
-    let route = url.split(/\/(?!\/)/)
-    route.splice(0, 2)
-    route.join('/')
-    if (route.indexOf('.') === -1) {
-      shouldFetch = true
-      url = Index
+  let urlObj = getUrlObj(event.request.url)
+  let shouldFetch = shouldFetch = shouldFetchHandler(urlObj)
+  if (!shouldFetch) { // 判断URL是否为请求html
+    let ind = Router.findIndex(item => item.handlerPath(urlObj))
+    shouldFetch = ind > -1
+    if (shouldFetch && !Router[ind].cacheFirst) {
+      urlObj = self.navigator.onLine ? urlObj : getUrlObj(Router[ind].fallBack)
     }
   }
   if (shouldFetch) {
     event.respondWith(
       caches.open(cacheId).then(cache => {
-        return getResponseByCache(cache, url)
+        return getResponseByCache(cache, urlObj)
       })
     )
   }
 })
 
-self.addEventListener('message', event => {
-  console.log(event)
+self.executer = {
+  init (data) {
+    self.VERSION = data.version
+    return this.preLoad(data.list)
+  },
+  preLoad (list) {
+    return caches.open(cacheId).then(cache => {
+      return Promise.all(list.map(url => getResponseByCache(cache, getUrlObj(url))))
+    })
+  }
+}
+
+self.addEventListener('message', ({data}) => {
+  if (data && typeof data === 'object' && data.exec && typeof self.executer[data.exec] === 'function') {
+    self.executer[data.exec](data.data)
+  }
 })
