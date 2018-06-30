@@ -1,8 +1,7 @@
-const shouldFetchHandler = <% shouldFetchHandler %>
-const nameHandler = <% nameHandler %> // [name].[hash].ext
-const cacheId = <% cacheId %>
-const Router = <% Router %>
-self.VERSION = '1.0'
+const shouldFetchHandler = <% shouldFetchHandler %> /* eslint-disable-line */
+const nameHandler = <% nameHandler %> // [name].[hash].ext /* eslint-disable-line */
+const cacheId = <% cacheId %> /* eslint-disable-line */
+const Router = <% Router %> /* eslint-disable-line */
 
 // function getUrlObj (url) {
 //   let nameMap = {reg: null, map: []};
@@ -29,6 +28,7 @@ self.VERSION = '1.0'
 //   let baseUrl = urlObj.join('/')
 //   return { baseUrl, name, hash, ext }
 // }
+self.appName = '1.0'
 function getUrlObj (url) {
   return new URL(url, self.location.origin)
 }
@@ -65,13 +65,14 @@ function getRequest (url, opt = {mode: 'no-cors'}) {
 function getCacheResquest (urlObj) {
   let { baseUrl, urlHash, urlSearch, name, hash, ext } = transUrl(urlObj)
   let fileName = `${name.join('-')}${ext ? '.' + ext : ''}`
-  let search = hash.length > 0 ? `hash=${hash.join('-')}` : `sw_version=${self.VERSION}`
+  let search = hash.length > 0 ? `sw_hash=${hash.join('-')}` : `sw_appname=${self.appName}`
   search = (urlSearch || '?') + search
   let cacheUrl = `${baseUrl}${fileName}${search}${urlHash}`
   return getRequest(cacheUrl)
 }
 
 function getResponseByCache (cache, urlObj) {
+  // todo if has appName ignore search
   let cacheRequest = getCacheResquest(urlObj)
   return cache.match(cacheRequest).then(res => {
     if (res) {
@@ -119,7 +120,7 @@ self.addEventListener('fetch', event => {
 
 self.executer = {
   init (data) {
-    self.VERSION = data.version
+    // todo 清空非预缓存列表文件，并预缓存文件
     return this.preLoad(data.list)
   },
   preLoad (list) {

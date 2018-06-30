@@ -10,7 +10,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const OptimizeCSSPlugin = require('optimize-css-assets-webpack-plugin')
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
-const swPlugin = require('./swPlugins/sw-plugin.js')
+const SwPlugin = require('./swPlugins/sw-plugin.js')
 
 const env = require('../config/prod.env')
 
@@ -117,7 +117,7 @@ const webpackConfig = merge(baseWebpackConfig, {
         ignore: ['.*']
       }
     ]),
-    new swPlugin({})
+    new SwPlugin({})
   ]
 })
 

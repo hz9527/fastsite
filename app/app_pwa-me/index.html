@@ -4,14 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>sw</title>
-  </head>
-  <body>
-    <div id="app"></div>
     <script>
       window.SEND_TO_SW = {
         _state: 'init',
         _cacheList: [],
-        send (exec, data) {
+        send(exec, data) {
           if (this._state === 'notSupport') return
           if (this._state === 'init') {
             this._cacheList.push([exec, data])
@@ -23,13 +20,18 @@
             }
           }
         },
-        setState (state) {
+        setState(state) {
           if (state !== 'notSupport' || state !== 'activated' || this.state !== 'init') return
           this._state = state
           if (state === 'activated') this._cacheList.forEach(item => this.send(item[0], item[1]))
           this._cacheList = null
         }
       }
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').then(register => {
           register.addEventListener('updatefound', () => {

@@ -59,17 +59,23 @@ self.addEventListener('fetch', event => {
 
 ### 关于清除缓存
 
-从用户体验角度来讲，是否清除缓存不会对用户造成多大的影响，但是实际上这样是不好的。我们可以将缓存的资源（文件）分为两类，一类是会有打包版本的资源，如`app.hash.js`，即该资源确实能通过名字和hash确定同一文件的不同版本；一类则是文件hash资源，如`hash.png` `index.html`我们从文件无法区分是否是同一文件的不同版本，因此对于前者我们可以通过上述将请求改为`name.ext?hash=hash`的方式缓存，对于前者，我们可以在请求资源时确定是否有非此hash（‘版本’）文件，对于后者则在message中删除非当前版本资源。结合预缓存，示例代码如下：
+从用户体验角度来讲，是否清除缓存不会对用户造成多大的影响，但是实际上这样是不好的（毕竟cacheStorage空间有限）。我们可以将缓存的资源（文件）分为两类，一类是会有打包版本的资源，如`app.hash.js`，即该资源确实能通过名字和hash确定同一文件的不同版本；一类则是文件hash资源，如`hash.png` `index.html`我们从文件无法区分是否是同一文件的不同版本，因此对于前者我们可以通过上述将请求改为`name.ext?hash=hash`的方式缓存，对于前者，我们可以在请求资源时确定是否有非此hash（‘版本’）文件，对于后者有多种方案，推荐方案如下：
+
+客户端动态script通过注入版本对比localStorage内字段，确定是否预缓存（postMessage），预缓存清空非预缓存资源
+
+示例代码如下：
 
 ```js
 // client
 
 // sw
-self.addEventListener('message', msg => { // {exec: 'update', data: {precatch: Array, version: String}}
+self.addEventListener('message', msg => { // {exec: 'init', data: {list: Array, version: String}}
   caches.open(cacheId)
     .then(cache => {
       // prefetch
-      cache.keys().then()
+      cache.keys().then(request => {
+        // ...
+      })
     })
 })
 ```
@@ -131,6 +137,27 @@ sw本质上是客户端的本地代理，因此建议404页面应该通过sw中�
 </html>
 
 ```
+
+### 关于单页与多页
+
+首先思考一个问题，当使用webpack打包一个单页应用，不论是预缓存列表还是生成的sw文件都很容易处理，因为不涉及处理资源来自哪个页面，sw文件也只需要生成一个即可，但是多页应用就不一样，我们不确定打包出来的资源与应用的对应关系，所以预缓存列表处理就变得复杂，其次是sw文件如果只生成一份，那么由于非name+hash类资源（后简称为非hash资源）是通过sw_version来区别，所以不同应用version不一致导致无法区分版本和处理缓存，另外当多页复用同一非hash资源时虽然在打包时我们能确认，但是带上version后就会当作请求不同的资源，一方面占用缓存，另一方面还会重新请求，因此整个方案可能需要重新设计，但是不带上version区别资源那么再删除资源就只能删除全部资源，因此只有两种方式来处理：
+
+1. 将不同页面储存在不同cacheId下，通过cacheId隔离
+2. 将非hash资源存储request带上appName，在每次init时，删除带有该appName的非预缓存资源
+
+方案1造成的问题会是公用资源的取用变得复杂，或者说只能存储多份，显然不合理；方案二则会使带有appName的资源储存多份，当然可以采用ignoreSearch的方式实现跨应用共享非hash资源，appName则通过注册sw文件时添加search实现，而不需要单独通过通信的形式实现
+
+## 整体方案总结
+
+sw文件一直不需要更新，通过postMessage实现初始化预缓存（删除缓存及预缓存），单独的预缓存。对于打包版本的资源直接通过hash在每次fetch资源时（sw发出fetch或拦截客户端请求）判断是否更新缓存，对于非hash资源则在缓存request添加appName字段，以便在初始化时删除该资源，即使它是可共用的
+
+### 客户端
+
+通过version判断与localStorage里存储是否一致，不一致则初始化预缓存，需注入通信对象，注册sw逻辑（带有appName），动态script
+
+### sw端
+
+通过通信实现预缓存，install及activate钩子无需处理，主要逻辑通过fetch实现，打包版本的资源在fetch时确定是否请求及清空缓存，非hash资源在初始化预缓存晴空appName一致及不带appName资源
 
 ### 插件设计
 

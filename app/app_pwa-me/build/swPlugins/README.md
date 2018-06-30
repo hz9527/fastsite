@@ -2,16 +2,26 @@
 
 ## API设计
 
-**基础部分**
+**公共基础部分**
+
+* minify 是否压缩
+
+**sw基础部分**
 
 * filename 生成文件名
 * filepath 生成文件
-* minify 是否压缩
-* templatePath 自定义模板路径
+* swTemplatePath 自定义sw模板路径
+
+**client基础部分**
+
+* inject 是否将html注入的js及css动态注入，即不更新sw方案
+* htmlTem html模板
+* rewriteHtmlPath 重写html文件，即对比html模板，将模版中不存在的js、css动态注入
+* clientTemplatePath 自定义动态script模板路径
 
 **模版部分**
 
-* cacheId
+* cacheId cacheStorage缓存名，会加上`sw-plugin`前缀
 * prefetch 在install时缓存文件列表，支持`Array<String | RegExp> Function`
 * ignore 不缓存文件，支持`Array<String | RegExp> Function`
 * shouldFetch 在fetch事件时决定是否处理，支持`Array<String | RegExp> Function`
@@ -25,14 +35,34 @@
 
 - [ ] messageHandler
 - [ ] fetchHandler
-- [ ] skipWait 在install是否直接skipWaiting
 
-**自定义模板相关**
+### 自定义模板
 
-1. prefetch将由prefetch、ignore、assetsPublicPath生成
-2. prefetch字段将作为数组传入，如果值为函数将先把webpack生成资源全部传入，资源将先经过prefix；数组字符串将先prefix，正则则不会
-3. shouldFetch，nameType将处理为函数传入
-4. executer自带封装两种方法 preLoad, init
+自定义模板就是js文件，允许注入变量，示例如下：
+
+```js
+// 例如cacheId为test
+// 模板文件
+const myCacheId = <! cacheId >
+
+// 生成文件
+const myCacheId = 'test'
+```
+
+|注入变量名 |数据类型 |如何计算出该变量 |备注 |
+|---|---|---|---|
+|cacheId | String | `'sw-plugin' + options.cacheId` | 仅swTemplate能注入 |
+|VERSION | String |preFetch及injectCss及injectJs组成的文件名列表计算的md5值 | sw及client模版均能注入 |
+|preFetch | Array <String> | 由prefetch、ignore及router生成，并会根据assetsPublicPath补全 | sw及client模版均能注入 |
+|shouldFetchHandler | Function | shouldFetch |仅swTemplate能注入|
+|nameHandler | Function | nameType |仅swTemplate能注入|
+|injectCss | Array <String> | rewriteHtmlPath中存在 htmlTem不存在的css | 仅clientTemplate能注入 |
+|injectJs | Array <String> | rewriteHtmlPath中存在 htmlTem不存在的js | 仅clientTemplate能注入 |
+
+executer自带封装两种方法 preLoad, init
+
+### 单页与多页
+
 
 ## 大致思路
 
